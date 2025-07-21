@@ -1,74 +1,51 @@
-name: Build GRRLIB with FreeType for Wii
+name: Wii Messenger Build
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: 🧹 Checkout repo
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: 💽 Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git build-essential autoconf automake libtool pkg-config
+    - name: Install DevKitPro pacman
+      run: |
+        sudo apt update
+        sudo apt install -y curl gnupg
+        curl -fsSL https://apt.devkitpro.org/devkitpro-archive.key | sudo gpg --dearmor -o /usr/share/keyrings/devkitpro-archive.gpg
+        echo "deb [signed-by=/usr/share/keyrings/devkitpro-archive.gpg] https://apt.devkitpro.org stable main" | sudo tee /etc/apt/sources.list.d/devkitpro.list
+        sudo apt update
+        sudo apt install -y devkitpro-pacman
+        export PATH=/opt/devkitpro/devkitPPC/bin:$PATH
+        echo "export DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+        echo "export DEVKITPPC=/opt/devkitpro/devkitPPC" >> $GITHUB_ENV
+        echo "export PATH=/opt/devkitpro/devkitPPC/bin:$PATH" >> $GITHUB_ENV
 
-      - name: 🛠️ Install DevKitPro toolchain (Wii)
-        run: |
-          wget https://apt.devkitpro.org/install-devkitpro-pacman
-          chmod +x install-devkitpro-pacman
-          sudo ./install-devkitpro-pacman
-          sudo dkp-pacman -Sy
-          sudo dkp-pacman -S --noconfirm devkitPPC wii-dev
+    - name: Install toolchain and libraries
+      run: |
+        export DEVKITPRO=/opt/devkitpro
+        export DEVKITPPC=/opt/devkitpro/devkitPPC
+        dkp-pacman -Syu --noconfirm
+        dkp-pacman -S --noconfirm devkitPPC portlibs wii-dev
 
-      - name: 🔁 Clone FreeType
-        run: |
-          git clone https://gitlab.freedesktop.org/freetype/freetype.git
-          cd freetype
-          ./autogen.sh || true  # Skip if already present
-          ./configure --host=powerpc-eabi --prefix=/opt/devkitpro/portlibs/wii
-          make -j$(nproc)
-          sudo make install
+    - name: Build GRRLIB
+      working-directory: libs/GRRLIB
+      run: |
+        make
 
-      - name: 🎨 Clone and Build GRRLIB
-        run: |
-          git clone https://github.com/GRRLIB/GRRLIB.git
-          cd GRRLIB
-          make -j$(nproc)
-          sudo make install
+    - name: Build Wii Messenger
+      working-directory: source
+      run: |
+        make
 
-      - name: 📦 Upload GRRLIB build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: GRRLIB-wii-build
-          path: |
-            /opt/devkitpro/portlibs/wii/lib/libgrrlib.a
-            /opt/devkitpro/portlibs/wii/include/grrlib/
-
-  build-dol:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: 🧹 Checkout wii-messenger
-        uses: actions/checkout@v3
-
-      - name: 💽 Install DevKitPro toolchain
-        run: |
-          wget https://apt.devkitpro.org/install-devkitpro-pacman
-          chmod +x install-devkitpro-pacman
-          sudo ./install-devkitpro-pacman
-          sudo dkp-pacman -Sy
-          sudo dkp-pacman -S --noconfirm devkitPPC wii-dev
-
-      - name: 🏗️ Compile Wii Messenger
-        run: |
-          cd wii-messenger
-          make
-
-      - name: 📦 Upload .dol artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: wii-messenger-dol
-          path: wii-messenger/wii-messenger.dol
+    - name: Upload .dol
+      uses: actions/upload-artifact@v4
+      with:
+        name: wii-messenger
+        path: source/*.dol
