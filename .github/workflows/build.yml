@@ -35,7 +35,7 @@ jobs:
         dkp-pacman -S --noconfirm devkitPPC portlibs wii-dev
 
     - name: Build GRRLIB
-      working-directory: libs/GRRLIB
+      working-directory: libs/GRRLIB/GRRLIB
       run: |
         make
 
