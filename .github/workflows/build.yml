@@ -9,25 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkitppc:latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v4
-
-    - name: Install DevKitPro via script
-      run: |
-        wget https://apt.devkitpro.org/install-devkitpro-pacman
-        chmod +x install-devkitpro-pacman
-        sudo ./install-devkitpro-pacman
-        echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
-        echo "DEVKITPPC=/opt/devkitpro/devkitPPC" >> $GITHUB_ENV
-        echo "PATH=/opt/devkitpro/devkitPPC/bin:$PATH" >> $GITHUB_ENV
-
-    - name: Install toolchain and libraries
-      run: |
-        source $GITHUB_ENV
-        sudo dkp-pacman -Syu --noconfirm
-        sudo dkp-pacman -S --noconfirm wii-libpng wii-libjpeg wii-zlib wii-freetype
 
     - name: Build GRRLIB
       working-directory: libs/GRRLIB
