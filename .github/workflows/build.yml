@@ -27,7 +27,7 @@ jobs:
       run: |
         source $GITHUB_ENV
         sudo dkp-pacman -Syu --noconfirm
-        sudo dkp-pacman -S --noconfirm devkitPPC portlibs wii-dev
+        sudo dkp-pacman -S --noconfirm devkitPPC libpng libjpeg zlib freetype wii-dev
 
     - name: Build GRRLIB
       working-directory: libs/GRRLIB
