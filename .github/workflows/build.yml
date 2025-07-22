@@ -19,25 +19,23 @@ jobs:
         wget https://apt.devkitpro.org/install-devkitpro-pacman
         chmod +x install-devkitpro-pacman
         sudo ./install-devkitpro-pacman
-        echo "export DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
-        echo "export DEVKITPPC=/opt/devkitpro/devkitPPC" >> $GITHUB_ENV
-        echo "export PATH=/opt/devkitpro/devkitPPC/bin:$PATH" >> $GITHUB_ENV
+        echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+        echo "DEVKITPPC=/opt/devkitpro/devkitPPC" >> $GITHUB_ENV
+        echo "PATH=/opt/devkitpro/devkitPPC/bin:$PATH" >> $GITHUB_ENV
 
     - name: Install toolchain and libraries
       run: |
         source $GITHUB_ENV
-        dkp-pacman -Syu --noconfirm
-        dkp-pacman -S --noconfirm devkitPPC portlibs wii-dev
+        sudo dkp-pacman -Syu --noconfirm
+        sudo dkp-pacman -S --noconfirm devkitPPC portlibs wii-dev
 
     - name: Build GRRLIB
       working-directory: libs/GRRLIB
-      run: |
-        make
+      run: make
 
     - name: Build Wii Messenger
       working-directory: source
-      run: |
-        make
+      run: make
 
     - name: Upload .dol
       uses: actions/upload-artifact@v4
